@@ -1,0 +1,63 @@
+This is a RobotC program for a VEX robot that navigates toward an IR          
+  (infrared) beacon. Here's a breakdown:                                        
+                                                                                
+  ---                                                                           
+  Hardware Setup                                                                
+                                                                                
+  - analog1 — analog input reading IR intensity from a photodiode array         
+  - digital10 — sets beacon frequency (0 = 1kHz red, 1 = 10kHz green)           
+  - digital11 — shutter control (open/close the IR sensor's accumulator)        
+  - digital12 — counter reset for cycling through the 8 photodiodes             
+  - port1 / port10 — right and left drive motors                                
+                                                                                
+  ---                                                                           
+  How It Works                                                                  
+                  
+  The robot has 8 photodiodes (PD0–PD7) arranged in an arc, each pointing in a
+  slightly different direction. The code scans them in sequence to figure out   
+  which direction the beacon is in.
+                                                                                
+  Core Loop (task main)                                                         
+  
+  Runs forever:                                                                 
+  1. ReadPD() — scans all 8 photodiodes by toggling the shutter and counter,
+  storing each reading (PD0–PD7) and their sum (PD_sum)                         
+  2. Find_max() — finds which photodiode has the strongest IR signal (max_no =
+  0–7)                                                                          
+  3. Move() — steers the robot toward the beacon based on max_no                
+  
+  Steering Logic (Move)                                                         
+                  
+  - error = 4 - max_no: PD4 is assumed to be "dead center." If PD4 has the max  
+  signal, error = 0 (going straight). If PD0 has max, error = +4 (turn right),
+  etc.                                                                          
+  - steer = error × steer_sensitivity: proportional steering
+  - Search mode (PD_sum < ambient_level): beacon not detected → stop forward    
+  motion, spin in place                                                         
+  - Slow mode (PD_sum > slow_level): beacon is close → reduce speed             
+  - Motor outputs are clamped to ±127 by limit_pwm()                            
+                                                                                
+  Expose_and_read()                                                             
+                                                                                
+  Each photodiode reading works like a camera exposure: close the shutter       
+  (clear/reset), then open it for expose_time milliseconds, then read the
+  accumulated IR intensity. Longer expose_time = more sensitivity.              
+                  
+  ---
+  Key Parameters (tunable in main)
+                                                                                
+  ┌───────────────────┬───────┬─────────────────────────────────────────┐
+  │     Variable      │ Value │                 Purpose                 │       
+  ├───────────────────┼───────┼─────────────────────────────────────────┤
+  │ expose_time       │ 5ms   │ IR sensing sensitivity                  │       
+  ├───────────────────┼───────┼─────────────────────────────────────────┤
+  │ ambient_level     │ 200   │ Threshold to detect beacon at all       │
+  ├───────────────────┼───────┼─────────────────────────────────────────┤       
+  │ slow_level        │ 5000  │ Threshold to slow down (beacon is near) │
+  ├───────────────────┼───────┼─────────────────────────────────────────┤       
+  │ steer_sensitivity │ 20    │ How aggressively it turns               │
+  ├───────────────────┼───────┼─────────────────────────────────────────┤       
+  │ forward_speed     │ 35    │ Normal drive speed                      │
+  ├───────────────────┼───────┼─────────────────────────────────────────┤       
+  │ spin_speed        │ 50    │ Search spin speed                       │
+  └───────────────────┴───────┴─────────────────────────────────────────┘   
