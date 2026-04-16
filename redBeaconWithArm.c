@@ -1,5 +1,6 @@
 #pragma config(Sensor, in1,    analog1,     sensorAnalog)
 #pragma config(Sensor, dgtl1,  limitSwitch, sensorTouch)
+#pragma config(Sensor, dgtl2,  rangeSensor, sensorSONAR)
 #pragma config(Sensor, dgtl10, digital10,   sensorDigitalOut)
 #pragma config(Sensor, dgtl11, digital11,   sensorDigitalOut)
 #pragma config(Sensor, dgtl12, digital12,   sensorDigitalOut)
@@ -13,6 +14,9 @@ int freq, ambient_level, slow_level, expose_time, steer_sensitivity, forward_spe
 
 // Arm parameters
 int arm_down_speed, arm_up_speed, arm_down_time, arm_up_time, arm_pause_time;
+
+// Range sensor and exit parameters
+int no_wall_threshold, scan_spin_speed;
 
 // PD values for all 8 photodiodes and their sum
 int PD0, PD1, PD2, PD3, PD4, PD5, PD6, PD7, PD_sum;
@@ -118,10 +122,12 @@ void Press_arm(){
 	motor[port2] = 0;
 }
 
-/*Main initializes all parameters, selects the red beacon frequency (1kHz),
-drives toward the beacon until the limit switch is triggered, then repeatedly
-presses the arm down to turn off the beacon. The arm keeps pressing until the
-IR sensor confirms the beacon is no longer emitting (PD_sum < ambient_level).*/
+/*Main initializes all parameters, then executes five phases:
+  Phase 1: Drive toward red beacon (1kHz) until limit switch triggers.
+  Phase 2: Press arm to turn off red beacon until IR confirms it is off.
+  Phase 3: Raise arm, switch to green beacon (10kHz), drive toward it.
+  Phase 4: At green beacon, swing arm down to capture it.
+  Phase 5: Spin to scan with range sensor, find open exit, drive backward out.*/
 task main(){
 	freq              = 0;    // 0 = 1kHz red beacon, 1 = 10kHz green beacon
 	ambient_level     = 200;  // minimum PD_sum to consider beacon detected
@@ -139,22 +145,24 @@ task main(){
 	arm_up_time       = 500;  // ms to raise arm back up
 	arm_pause_time    = 200;  // ms to hold at bottom of press
 
+	// Range sensor and exit parameters
+	no_wall_threshold = 888;  // range reading above this = no wall (open exit)
+	scan_spin_speed   = 65;   // spin speed when scanning for exit (faster than search)
+
 	SensorValue[digital10] = freq; // set IR sensor to 1kHz (red beacon)
 
-	// Phase 1: Drive toward the beacon until the limit switch is pressed.
+	// ========== Phase 1: Drive toward the red beacon ==========
 	while(SensorValue[limitSwitch] == 0){
 		ReadPD();
 		Find_max();
 		Move();
 	}
 
-	// Limit switch triggered — robot has reached the beacon. Stop drive motors.
+	// Limit switch triggered — robot has reached the red beacon. Stop drive motors.
 	motor[port1]  = 0;
 	motor[port10] = 0;
 
-	// Phase 2: Repeatedly press the arm down to turn off the beacon.
-	// After each press, read the IR sensor to check if the beacon is still on.
-	// Stop once the beacon is confirmed off (PD_sum drops below ambient_level).
+	// ========== Phase 2: Press arm to turn off the red beacon ==========
 	delay(300); // short settle before starting arm presses
 
 	ReadPD(); // initial reading to check if beacon is still on
@@ -164,6 +172,43 @@ task main(){
 		ReadPD();   // re-read sensor to check if beacon turned off
 	}
 
-	// Beacon is off — ensure arm motor is stopped.
+	// Red beacon is off — stop arm motor.
 	motor[port2] = 0;
+
+	// ========== Phase 3: Raise arm, switch to green beacon, drive toward it ==========
+	// Raise the arm to clear position before moving
+	motor[port2] = arm_up_speed;
+	delay(arm_up_time);
+	motor[port2] = 0;
+
+	// Switch IR sensor to 10kHz (green beacon)
+	freq = 1;
+	SensorValue[digital10] = freq;
+	delay(200); // settle time after frequency switch
+
+	// Drive toward the green beacon until the limit switch is pressed.
+	while(SensorValue[limitSwitch] == 0){
+		ReadPD();
+		Find_max();
+		Move();
+	}
+
+	// Limit switch triggered — robot has reached the green beacon. Stop drive motors.
+	motor[port1]  = 0;
+	motor[port10] = 0;
+
+	// ========== Phase 4: Swing arm down forever to capture the green beacon ==========
+	motor[port2] = arm_down_speed;
+
+	// ========== Phase 5: Spin to find open exit, then drive backward out ==========
+	// Rotate in place until the rear range sensor detects no wall (open exit).
+	while(SensorValue[rangeSensor] < no_wall_threshold){
+		motor[port1]  =  limit_pwm(scan_spin_speed);   // right forward
+		motor[port10] = -limit_pwm(scan_spin_speed);   // left backward -> robot spins
+	}
+
+	// Open exit found — drive backward at max speed to leave the arena.
+	// Arm stays down to hold the captured green beacon.
+	motor[port1]  = -127;  // right motor full reverse
+	motor[port10] = -127;  // left motor full reverse
 }
