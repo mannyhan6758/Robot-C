@@ -72,20 +72,20 @@ int green_fast_speed    = 82;
 int green_mid_speed     = 60;
 int green_slow_speed    = 36;
 
-// PD heading control
-float Kp = 2.0;
-float Kd = 1.1;
-int center_deadband = 4;
+// PD heading control — aggressive, no slowdown near beacon
+float Kp = 3.8;
+float Kd = 1.6;
+int center_deadband = 2;
 
-// Arm
-int arm_down_speed   = -85;
-int arm_up_speed     = 85;
-int arm_hold_speed   = -10;
+// Arm — hard swing, long dwell
+int arm_down_speed   = -127;
+int arm_up_speed     = 127;
+int arm_hold_speed   = -30;
 
-int arm_press_time   = 220;
-int arm_release_time = 170;
-int arm_pause_time   = 120;
-int arm_capture_time = 180;
+int arm_press_time   = 550;
+int arm_release_time = 450;
+int arm_pause_time   = 200;
+int arm_capture_time = 500;
 
 // Motion timing
 int post_press_back_ms   = 220;
@@ -248,25 +248,14 @@ int dominantBeacon(int targetFreq, int otherFreq)
 // ======================================================
 // Motion controller
 // ======================================================
-int chooseBaseSpeed(int sumVal, int nearSum, int closeSum, int fastSpd, int midSpd, int slowSpd)
-{
-  if(sumVal > closeSum) return slowSpd;
-  if(sumVal > nearSum)  return midSpd;
-  return fastSpd;
-}
-
 void driveToBeaconPD(int nearSum, int closeSum, int fastSpd, int midSpd, int slowSpd)
 {
   int error = PD_bearing;
   int deriv = error - lastError;
   int steer = (int)(Kp * error + Kd * deriv);
-  int base  = chooseBaseSpeed(PD_sum, nearSum, closeSum, fastSpd, midSpd, slowSpd);
+  int base  = fastSpd;   // full speed all the way in; limit switch stops us
 
   lastError = error;
-
-  if(iabs(error) > 16) base -= 14;
-  if(iabs(error) > 26) base -= 10;
-  if(base < 24) base = 24;
 
   if(iabs(error) <= center_deadband) steer = 0;
 
@@ -335,11 +324,13 @@ void captureGreenAction()
 // ======================================================
 // Fixed-angle exit (sonar-free)
 // ======================================================
-void turn90Right()
+void turn90Exit()
 {
   stopDrive();
   clearTimer(T2);
-  setDrive(exit_turn_speed, -exit_turn_speed);
+  // Spin the opposite direction so the pivot faces the arena opening,
+  // not back into the arena.
+  setDrive(-exit_turn_speed, exit_turn_speed);
   while(time1[T2] < exit_turn_90_ms)
   {
     wait1Msec(5);
@@ -508,8 +499,8 @@ task main()
         break;
 
       case TURN_EXIT:
-        // Sharp right-angle pivot. No scan, no sonar.
-        turn90Right();
+        // Sharp right-angle pivot toward the opening. No scan, no sonar.
+        turn90Exit();
         state = DRIVE_OUT;
         break;
 
