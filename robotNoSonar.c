@@ -162,6 +162,10 @@ void stopAllMotion()
 // ======================================================
 int exposeAndRead()
 {
+  // Advance the photodiode multiplexer to the next channel.
+  SensorValue[digital12] = 1;
+  SensorValue[digital12] = 0;
+
   SensorValue[digital11] = 1;
   wait1Msec(settle_ms);
   SensorValue[digital11] = 0;
@@ -172,7 +176,7 @@ int exposeAndRead()
 void setFreq(int freq)
 {
   SensorValue[digital10] = freq;
-  wait1Msec(1);
+  wait1Msec(5);
 }
 
 void readIR8(int freq)
