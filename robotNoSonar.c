@@ -62,7 +62,7 @@ int green_confirm_sum   = 2600;
 int cross_margin        = 220;
 
 // Speed schedule
-int search_spin_speed   = 55;
+int search_spin_speed   = 95;
 
 int red_fast_speed      = 95;
 int red_mid_speed       = 70;
@@ -73,8 +73,8 @@ int green_mid_speed     = 60;
 int green_slow_speed    = 36;
 
 // PD heading control — aggressive, no slowdown near beacon
-float Kp = 3.8;
-float Kd = 1.6;
+float Kp = 6.0;
+float Kd = 2.2;
 int center_deadband = 2;
 
 // Arm — hard swing, long dwell
@@ -281,8 +281,19 @@ void pressRedAction()
   wait1Msec(seat_nudge_ms);
   stopDrive();
 
+  // Swing the arm down hard, but bail out the moment the beacon
+  // goes off so we don't keep pressing past the click and toggle it
+  // back on. readIR8 takes ~80 ms, which is our poll interval.
   motor[armMotor] = arm_down_speed;
-  wait1Msec(arm_press_time);
+  clearTimer(T3);
+  while(time1[T3] < arm_press_time)
+  {
+    readIR8(FREQ_RED);
+    if(PD_sum < red_off_sum)
+    {
+      break;
+    }
+  }
   motor[armMotor] = 0;
 
   wait1Msec(arm_pause_time);
