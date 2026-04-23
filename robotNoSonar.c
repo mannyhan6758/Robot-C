@@ -519,7 +519,16 @@ task main()
 
       case DRIVE_OUT:
         // Drive blind for a fixed duration and assume we clear the opening.
-        driveOutBlind();
+        while(SensorValue[rangeSensor] < no_wall_threshold){
+		motor[port1]  =  limit_pwm(scan_spin_speed);   // right forward
+		motor[port10] = -limit_pwm(scan_spin_speed);   // left backward -> robot spins
+	}
+
+	// Open exit found — drive backward at max speed to leave the arena.
+	// Arm stays down to hold the captured green beacon.
+	motor[port1]  = -127;  // right motor full reverse
+	motor[port10] = -127;  // left motor full reverse
+
         state = DONE;
         break;
 
