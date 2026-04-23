@@ -62,7 +62,7 @@ int green_confirm_sum   = 2600;
 int cross_margin        = 220;
 
 // Speed schedule
-int search_spin_speed   = 70;
+int search_spin_speed   = 45;
 
 int red_fast_speed      = 95;
 int red_mid_speed       = 70;
@@ -94,10 +94,10 @@ int seat_nudge_ms        = 70;
 int capture_push_ms      = 150;
 
 // Fixed-time exit (no sonar)
-int exit_turn_speed      = 52;
+int exit_turn_speed      = 90;
 int exit_drive_speed     = 95;
-int exit_turn_90_ms      = 700;   // ~90 deg pivot at exit_turn_speed
-int exit_drive_time_ms   = 3000;  // long enough to clear the opening
+int exit_turn_90_ms      = 1000;   // ~90 deg pivot at exit_turn_speed
+int exit_drive_time_ms   = 4000;  // long enough to clear the opening
 
 // ======================================================
 // Globals
