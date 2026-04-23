@@ -371,22 +371,24 @@ task main()
   lastError = 0;
   motor[armMotor] = 0;
 
+  // Start spinning immediately so the robot is already turning during
+  // the first IR read (setFreq waits 200 ms on first call).
+  searchSpin();
+
   while(true)
   {
     switch(state)
     {
       case SEARCH_RED:
+        searchSpin();
         readIR8(FREQ_RED);
 
         if(PD_sum > red_acquire_sum)
         {
+          stopDrive();
           lostCount = 0;
           lastError = 0;
           state = APPROACH_RED;
-        }
-        else
-        {
-          searchSpin();
         }
         break;
 
