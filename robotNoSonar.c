@@ -62,7 +62,7 @@ int green_confirm_sum   = 2600;
 int cross_margin        = 220;
 
 // Speed schedule
-int search_spin_speed   = 95;
+int search_spin_speed   = 70;
 
 int red_fast_speed      = 95;
 int red_mid_speed       = 70;
