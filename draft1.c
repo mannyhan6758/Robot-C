@@ -21,7 +21,7 @@ int PD0, PD1, PD2, PD3, PD4, PD5, PD6, PD7, PD_sum;
 int max_val, max_no = 0;
 
 // Range sensor and exit parameters
-int no_wall_threshold, scan_spin_speed;
+int no_wall_threshold = 300, scan_spin_speed;
 
 /*The accumulator accumulates(or integrates) the rectified signal over a period of time (set by the expose and read)
 The accumulated voltage read by SensorValue[analog1](an analog voltage) is read by the controller.
