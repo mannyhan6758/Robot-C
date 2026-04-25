@@ -89,7 +89,7 @@ int arm_pause_time   = 200;
 int arm_capture_time = 500;
 
 // Motion timing
-int post_press_back_ms   = 300;
+int post_press_back_ms   = 500;
 int clear_turn_ms        = 160;
 int seat_nudge_ms        = 70;
 int capture_push_ms      = 70;
@@ -318,10 +318,7 @@ void clearFromRed()
 {
   clearTimer(T1);
   setDrive(-90, -90);
-  while(time1[T1] < post_press_back_ms)
-  {
-    if(SensorValue[limitSwitch] == 0 && time1[T1] > 80) break;
-  }
+  while(time1[T1] < post_press_back_ms) wait1Msec(5);
   stopDrive();
 
   setDrive(55, -55);
