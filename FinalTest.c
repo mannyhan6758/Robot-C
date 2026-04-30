@@ -184,7 +184,7 @@ void setFreq(int freq)
 {
   if(freq == currentFreq) return;
   SensorValue[digital10] = freq;
-  //wait1Msec(200);
+  wait1Msec(20);
   currentFreq = freq;
 }
 
@@ -533,8 +533,8 @@ task main()
         motor[leftMotor]  = 0;                                                                                                 
         motor[rightMotor] = 0;
         clearTimer(T2);                                                                                                        
-        motor[leftMotor]  =  -exit_turn_speed;   // left fwd
-        motor[rightMotor] = exit_turn_speed;   // right rev -> pivot right                                                    
+        motor[leftMotor]  =  exit_turn_speed;   // left fwd
+        motor[rightMotor] = -exit_turn_speed;   // right rev -> pivot right                                                    
         while(time1[T2] < exit_turn_90_ms) wait1Msec(5);
         motor[leftMotor]  = 0;                                                                                                 
         motor[rightMotor] = 0;
