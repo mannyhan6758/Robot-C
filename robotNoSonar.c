@@ -54,7 +54,7 @@ int red_close_sum       = 4200;
 int red_confirm_sum     = 2800;
 int red_off_sum         = 120;
 
-int green_acquire_sum   = 240;
+int green_acquire_sum   = 220;
 int green_lost_sum      = 170;
 int green_near_sum      = 2400;
 int green_close_sum     = 4200;
@@ -74,7 +74,7 @@ int green_mid_speed     = 60;
 int green_slow_speed    = 36;
 
 // PD heading control  aggressive, no slowdown near beacon
-float Kp = 5;
+float Kp = 3.5;
 float Kd = 1.2;
 int center_deadband = 1;
 
@@ -95,15 +95,15 @@ int seat_nudge_ms        = 70;
 int capture_push_ms      = 70;
 
 // Fixed-time exit (no sonar)
-int exit_turn_speed      = 100;
-int exit_drive_speed     = 110;
+int exit_turn_speed      = 120;
+int exit_drive_speed     = 127;
 int exit_turn_90_ms      = 1000;   // ~90 deg pivot at exit_turn_speed
 int exit_drive_time_ms   = 4000;  // long enough to clear the opening
 int exit_scan_speed = 50;
 int exit_scan_sweep_ms = 4000;
 int exit_sample_ms = 50;
 int exit_turn_15_ms = 170;
-int wall_distance_in = 14;
+int wall_distance_in = 17;
 
 // ======================================================
 // Globals
