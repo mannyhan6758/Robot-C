@@ -54,8 +54,8 @@ int red_close_sum       = 4200;
 int red_confirm_sum     = 2800;
 int red_off_sum         = 120;
 
-int green_acquire_sum   = 220;
-int green_lost_sum      = 170;
+int green_acquire_sum   = 180;
+int green_lost_sum      = 150;
 int green_near_sum      = 2400;
 int green_close_sum     = 4200;
 int green_confirm_sum   = 2800;
@@ -63,7 +63,7 @@ int green_confirm_sum   = 2800;
 int cross_margin        = 220;
 
 // Speed schedule
-int search_spin_speed   = 35;
+int search_spin_speed   = 50;
 
 int red_fast_speed      = 95;
 int red_mid_speed       = 70;
