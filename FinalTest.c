@@ -121,9 +121,7 @@ int no_wall_threshold = 300;
 
 
 
-// Positive bearing means the beacon is on the PD0/right side, matching
-// the course formula error = 4 - max_no.
-const int W[8] = {35, 25, 15, 5, -5, -15, -25, -35};
+const int W[8] = {-35, -25, -15, -5, 5, 15, 25, 35};
 
 // ======================================================
 // Utility
@@ -262,12 +260,7 @@ void driveToBeaconPD(int nearSum, int closeSum, int fastSpd, int midSpd, int slo
   int error = PD_bearing;
   int deriv = error - lastError;
   int steer = (int)(Kp * error + Kd * deriv);
-  int base  = fastSpd;
-
-  if(PD_sum > closeSum)
-    base = slowSpd;
-  else if(PD_sum > nearSum)
-    base = midSpd;
+  int base  = fastSpd;   // full speed all the way in; limit switch stops us
 
   lastError = error;
 
