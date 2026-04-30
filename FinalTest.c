@@ -121,7 +121,9 @@ int no_wall_threshold = 300;
 
 
 
-const int W[8] = {-35, -25, -15, -5, 5, 15, 25, 35};
+// Positive bearing means the beacon is on the PD0/right side, matching
+// the course formula error = 4 - max_no.
+const int W[8] = {35, 25, 15, 5, -5, -15, -25, -35};
 
 // ======================================================
 // Utility
@@ -260,7 +262,12 @@ void driveToBeaconPD(int nearSum, int closeSum, int fastSpd, int midSpd, int slo
   int error = PD_bearing;
   int deriv = error - lastError;
   int steer = (int)(Kp * error + Kd * deriv);
-  int base  = fastSpd;   // full speed all the way in; limit switch stops us
+  int base  = fastSpd;
+
+  if(PD_sum > closeSum)
+    base = slowSpd;
+  else if(PD_sum > nearSum)
+    base = midSpd;
 
   lastError = error;
 
@@ -522,59 +529,59 @@ task main()
         break;
 
       case DRIVE_OUT:
-    int r;                                                                                                                     
-    int count = 0; 
+    int r;
+    int count = 0;
     while(true)
     {
       // ---- Wall ahead: sonar < 15 in -> pivot right 90 deg ----
-      r = SensorValue[rangeSensor];                                                                                            
-      if(r > 0 && r < wall_distance_in)                                                                                        
-      {                                                                                                                        
-        motor[leftMotor]  = 0;                                                                                                 
-        motor[rightMotor] = 0;
-        clearTimer(T2);                                                                                                        
-        motor[leftMotor]  =  exit_turn_speed;   // left fwd
-        motor[rightMotor] = -exit_turn_speed;   // right rev -> pivot right                                                    
-        while(time1[T2] < exit_turn_90_ms) wait1Msec(5);
-        motor[leftMotor]  = 0;                                                                                                 
-        motor[rightMotor] = 0;
-        continue;                                                                                                              
-      }           
-
-      // ---- Front-LEFT edge hit: robot angled into wall on the left ----                                                     
-      // -> nudge 15 deg RIGHT to re-square.
-      if(SensorValue[frontLeftLimit] == 1)                                                                                     
-      {                                                                                                                        
+      r = SensorValue[rangeSensor];
+      if(r > 0 && r < wall_distance_in)
+      {
         motor[leftMotor]  = 0;
-        motor[rightMotor] = 0;                                                                                                 
+        motor[rightMotor] = 0;
+        clearTimer(T2);
+        motor[leftMotor]  =  exit_turn_speed;   // left fwd
+        motor[rightMotor] = -exit_turn_speed;   // right rev -> pivot right
+        while(time1[T2] < exit_turn_90_ms) wait1Msec(5);
+        motor[leftMotor]  = 0;
+        motor[rightMotor] = 0;
+        continue;
+      }
+
+      // ---- Front-LEFT edge hit: robot angled into wall on the left ----
+      // -> nudge 15 deg RIGHT to re-square.
+      if(SensorValue[frontLeftLimit] == 1)
+      {
+        motor[leftMotor]  = 0;
+        motor[rightMotor] = 0;
         clearTimer(T2);
         motor[leftMotor]  =  exit_turn_speed;
-        motor[rightMotor] = -exit_turn_speed;                                                                                  
+        motor[rightMotor] = -exit_turn_speed;
         while(time1[T2] < exit_turn_15_ms) wait1Msec(5);
-        motor[leftMotor]  = 0;                                                                                                 
+        motor[leftMotor]  = 0;
         motor[rightMotor] = 0;
-        continue;                                                                                                              
-      }           
-
-      // ---- Front-RIGHT edge hit: robot angled into wall on the right ----                                                   
-      // -> nudge 15 deg LEFT to re-square.
-      if(SensorValue[frontRightLimit] == 1)                                                                                    
-      {           
-        motor[leftMotor]  = 0;
-        motor[rightMotor] = 0;                                                                                                 
-        clearTimer(T2);
-        motor[leftMotor]  = -exit_turn_speed;                                                                                  
-        motor[rightMotor] =  exit_turn_speed;
-        while(time1[T2] < exit_turn_15_ms) wait1Msec(5);                                                                       
-        motor[leftMotor]  = 0;
-        motor[rightMotor] = 0;                                                                                                 
-        continue;                                                                                                              
+        continue;
       }
-                                                                                                                               
+
+      // ---- Front-RIGHT edge hit: robot angled into wall on the right ----
+      // -> nudge 15 deg LEFT to re-square.
+      if(SensorValue[frontRightLimit] == 1)
+      {
+        motor[leftMotor]  = 0;
+        motor[rightMotor] = 0;
+        clearTimer(T2);
+        motor[leftMotor]  = -exit_turn_speed;
+        motor[rightMotor] =  exit_turn_speed;
+        while(time1[T2] < exit_turn_15_ms) wait1Msec(5);
+        motor[leftMotor]  = 0;
+        motor[rightMotor] = 0;
+        continue;
+      }
+
       // ---- Default: drive forward ----
       motor[leftMotor]  = exit_drive_speed;
       motor[rightMotor] = exit_drive_speed;
-      wait1Msec(10);                                                                                                           
+      wait1Msec(10);
     }
         state = DONE;
         break;
