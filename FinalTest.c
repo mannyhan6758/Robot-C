@@ -49,15 +49,15 @@ int expose_time    = 8;
 // Detection thresholds
 int red_acquire_sum     = 220;
 int red_lost_sum        = 170;
-int red_near_sum        = 2400;
-int red_close_sum       = 4200;
+int red_near_sum        = 1600;
+int red_close_sum       = 3000;
 int red_confirm_sum     = 2800;
 int red_off_sum         = 120;
 
 int green_acquire_sum   = 180;
 int green_lost_sum      = 150;
-int green_near_sum      = 2400;
-int green_close_sum     = 4200;
+int green_near_sum      = 1600;
+int green_close_sum     = 3000;
 int green_confirm_sum   = 2800;
 
 int cross_margin        = 220;
@@ -65,18 +65,21 @@ int cross_margin        = 220;
 // Speed schedule
 int search_spin_speed   = 50;
 
-int red_fast_speed      = 95;
-int red_mid_speed       = 70;
-int red_slow_speed      = 42;
+int red_fast_speed      = 85;
+int red_mid_speed       = 55;
+int red_slow_speed      = 26;
 
-int green_fast_speed    = 82;
-int green_mid_speed     = 60;
-int green_slow_speed    = 36;
+int green_fast_speed    = 75;
+int green_mid_speed     = 50;
+int green_slow_speed    = 24;
 
-// PD heading control  aggressive, no slowdown near beacon
-float Kp = 5;
-float Kd = 1.2;
-int center_deadband = 1;
+// PD heading control. Keep steering capped so the speed schedule still matters.
+float Kp = 2.2;
+float Kd = 0.35;
+int center_deadband = 3;
+int fast_steer_cap = 55;
+int mid_steer_cap = 30;
+int close_steer_cap = 16;
 
 // Arm  hard swing, long dwell
 int arm_down_speed   = -127;
@@ -263,15 +266,27 @@ void driveToBeaconPD(int nearSum, int closeSum, int fastSpd, int midSpd, int slo
   int deriv = error - lastError;
   int steer = (int)(Kp * error + Kd * deriv);
   int base  = fastSpd;
+  int steerCap = fast_steer_cap;
 
   if(PD_sum > closeSum)
+  {
     base = slowSpd;
+    steerCap = close_steer_cap;
+  }
   else if(PD_sum > nearSum)
+  {
     base = midSpd;
+    steerCap = mid_steer_cap;
+  }
 
   lastError = error;
 
   if(iabs(error) <= center_deadband) steer = 0;
+  else
+  {
+    if(steer > steerCap) steer = steerCap;
+    if(steer < -steerCap) steer = -steerCap;
+  }
 
   setDrive(base + steer, base - steer);
 }
